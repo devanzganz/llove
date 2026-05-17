@@ -1,539 +1,1168 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Space Love 🚀💕</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>XAUUSD SMC/ICT Analyzer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Bebas+Neue&family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#070910;--s0:#0c0e17;--s1:#10131e;--s2:#161926;
+  --border:#1a1f30;--border2:#242a3e;
+  --gold:#f5c518;--gold2:#c98a00;
+  --buy:#00e5a0;--sell:#ff3d5a;--blue:#3d9eff;--purple:#9b5de5;
+  --orange:#ff8c42;--text:#dde2f2;--muted:#505878;--muted2:#2e3450;
+  --mono:'JetBrains Mono',monospace;--display:'Bebas Neue',sans-serif;--body:'Manrope',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{background:var(--bg);color:var(--text);font-family:var(--body);overflow-x:hidden;}
 
-        body {
-            height: 100vh;
-            background: radial-gradient(circle at center, #0f0f23 0%, #000 70%);
-            overflow: hidden;
-            font-family: 'Courier New', monospace;
-            position: relative;
-            perspective: 1000px;
-        }
+/* Grid texture */
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(245,197,24,.025)1px,transparent 1px),linear-gradient(90deg,rgba(245,197,24,.025)1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;z-index:0;}
 
-        /* Stars Background */
-        .stars {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
+/* ── LAYOUT ── */
+.app{display:flex;flex-direction:column;min-height:100vh;position:relative;z-index:1;}
 
-        .star {
-            position: absolute;
-            background: #fff;
-            border-radius: 50%;
-            animation: twinkle 3s ease-in-out infinite;
-        }
+/* ── TOP BAR ── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+  padding:12px 18px;border-bottom:1px solid var(--border);
+  background:rgba(7,9,16,.92);backdrop-filter:blur(10px);
+  position:sticky;top:0;z-index:100;
+}
+.logo{font-family:var(--display);font-size:26px;letter-spacing:3px;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.logo span{font-size:12px;letter-spacing:1px;color:var(--muted);font-family:var(--mono);display:block;margin-top:-4px;}
 
-        .star.small { width: 1px; height: 1px; }
-        .star.medium { width: 2px; height: 2px; }
-        .star.large { width: 3px; height: 3px; box-shadow: 0 0 10px #fff; }
+.topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 1; }
-        }
+.api-input-wrap{display:flex;align-items:center;gap:6px;}
+.api-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;}
+.api-input{background:var(--s1);border:1px solid var(--border2);border-radius:6px;
+  color:var(--text);font-family:var(--mono);font-size:11px;padding:6px 10px;outline:none;width:190px;}
+.api-input:focus{border-color:var(--gold);}
 
-        /* Planets */
-        .planet {
-            position: absolute;
-            border-radius: 50%;
-            animation: orbit 20s linear infinite;
-        }
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted2);}
+.dot.live{background:var(--buy);box-shadow:0 0 8px var(--buy);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 
-        .planet.earth {
-            width: 60px;
-            height: 60px;
-            background: radial-gradient(circle at 30% 30%, #4a90e2, #2563eb, #1e3a8a);
-            top: 10%;
-            left: 80%;
-            box-shadow: inset -10px -10px 0 rgba(0,0,0,0.3), 0 0 20px rgba(74, 144, 226, 0.5);
-        }
+.price-live{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--gold);}
+.price-chg{font-family:var(--mono);font-size:11px;}
+.price-chg.up{color:var(--buy);}
+.price-chg.dn{color:var(--sell);}
 
-        .planet.mars {
-            width: 40px;
-            height: 40px;
-            background: radial-gradient(circle at 30% 30%, #ef4444, #dc2626, #991b1b);
-            top: 60%;
-            left: 10%;
-            box-shadow: inset -8px -8px 0 rgba(0,0,0,0.3), 0 0 15px rgba(239, 68, 68, 0.4);
-        }
+/* ── TABS ── */
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--s0);}
+.tab{padding:12px 18px;font-family:var(--mono);font-size:11px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;
+  transition:all .2s;white-space:nowrap;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold);}
 
-        @keyframes orbit {
-            0% { transform: rotate(0deg) translateX(50px) rotate(0deg); }
-            100% { transform: rotate(360deg) translateX(50px) rotate(-360deg); }
-        }
+/* ── PANELS ── */
+.panel{display:none;padding:16px;}
+.panel.active{display:block;}
 
-        /* 3D Center Text */
-        .center-3d {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotateX(-15deg);
-            transform-style: preserve-3d;
-            animation: float3d 6s ease-in-out infinite;
-        }
+/* ── SIGNAL CARD ── */
+.signal-banner{
+  border-radius:14px;padding:20px;margin-bottom:16px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+  border:1.5px solid var(--border2);background:var(--s1);
+  transition:all .4s;
+}
+.signal-banner.buy{border-color:var(--buy);background:rgba(0,229,160,.04);box-shadow:0 0 30px rgba(0,229,160,.1);}
+.signal-banner.sell{border-color:var(--sell);background:rgba(255,61,90,.04);box-shadow:0 0 30px rgba(255,61,90,.1);}
+.signal-banner.neutral{border-color:var(--orange);background:rgba(255,140,66,.04);}
 
-        .main-3d-text {
-            font-size: clamp(2.5rem, 10vw, 6rem);
-            color: #fff;
-            text-shadow: 0 0 30px #00ffff,
-                         0 0 60px #ff1493,
-                         0 0 90px #00ff00;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            transform-style: preserve-3d;
-            user-select: none;
-            text-align: center;
-        }
+.sig-left{}
+.sig-dir{font-family:var(--display);font-size:48px;letter-spacing:2px;line-height:1;}
+.sig-dir.buy{color:var(--buy);}
+.sig-dir.sell{color:var(--sell);}
+.sig-dir.neutral{color:var(--orange);}
+.sig-sub{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:2px;}
 
-        .main-3d-text:hover {
-            transform: rotateY(15deg) rotateX(15deg) scale(1.1);
-            text-shadow: 0 0 40px #00ffff,
-                         0 0 80px #ff1493,
-                         0 0 120px #00ff00,
-                         0 0 160px #ffff00;
-        }
+.sig-right{display:flex;gap:12px;flex-wrap:wrap;}
+.sig-box{background:var(--s0);border-radius:10px;padding:12px 16px;min-width:110px;text-align:center;}
+.sig-box-label{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.sig-box-label.e{color:var(--blue);}
+.sig-box-label.sl{color:var(--sell);}
+.sig-box-label.tp{color:var(--buy);}
+.sig-box-label.rr{color:var(--gold);}
+.sig-box-val{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);}
 
-        @keyframes float3d {
-            0%, 100% { transform: translate(-50%, -50%) rotateX(-15deg) rotateY(-10deg); }
-            25% { transform: translate(-50%, -50%) rotateX(-10deg) rotateY(10deg); }
-            50% { transform: translate(-50%, -50%) rotateX(-20deg) rotateY(-5deg); }
-            75% { transform: translate(-50%, -50%) rotateX(-5deg) rotateY(-15deg); }
-        }
+/* ── REASON CHIPS ── */
+.reasons{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+.chip{font-family:var(--mono);font-size:10px;padding:4px 10px;border-radius:4px;letter-spacing:.5px;}
+.chip.bos{background:rgba(61,158,255,.1);color:var(--blue);border:1px solid rgba(61,158,255,.2);}
+.chip.choch{background:rgba(155,93,229,.1);color:var(--purple);border:1px solid rgba(155,93,229,.2);}
+.chip.ob{background:rgba(245,197,24,.08);color:var(--gold);border:1px solid rgba(245,197,24,.2);}
+.chip.fvg{background:rgba(255,140,66,.1);color:var(--orange);border:1px solid rgba(255,140,66,.2);}
+.chip.liq{background:rgba(0,229,160,.08);color:var(--buy);border:1px solid rgba(0,229,160,.2);}
+.chip.sweep{background:rgba(255,61,90,.08);color:var(--sell);border:1px solid rgba(255,61,90,.2);}
 
-        /* Falling Love Text */
-        .falling-love {
-            position: absolute;
-            font-weight: bold;
-            font-family: 'Courier New', monospace;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            z-index: 10;
-            text-shadow: 0 0 15px currentColor;
-        }
+/* ── GRID STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px;}
+.stat-card{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.stat-label{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.stat-val{font-family:var(--mono);font-size:20px;font-weight:700;}
+.stat-val.gold{color:var(--gold);}
+.stat-val.buy{color:var(--buy);}
+.stat-val.sell{color:var(--sell);}
+.stat-val.blue{color:var(--blue);}
 
-        .falling-love:hover {
-            transform: scale(1.3) rotateZ(15deg);
-            text-shadow: 0 0 25px currentColor, 0 0 35px #fff;
-        }
+/* ── CHART ── */
+.chart-wrap{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;position:relative;}
+.chart-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+.chart-container{position:relative;height:260px;}
 
-        @keyframes fallSpace {
-            0% {
-                transform: translateY(-50px) rotateZ(0deg) scale(0.5);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-                transform: translateY(0px) rotateZ(36deg) scale(1);
-            }
-            100% {
-                transform: translateY(100vh) rotateZ(360deg) scale(0.3);
-                opacity: 0;
-            }
-        }
+/* ── STRUCTURE TABLE ── */
+.struct-table{background:var(--s1);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;}
+.st-head{display:grid;grid-template-columns:80px 1fr 100px 80px 80px;
+  padding:10px 14px;background:var(--s0);border-bottom:1px solid var(--border);
+  font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+.st-row{display:grid;grid-template-columns:80px 1fr 100px 80px 80px;
+  padding:10px 14px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;transition:background .15s;}
+.st-row:last-child{border:none;}
+.st-row:hover{background:rgba(255,255,255,.02);}
+.badge{font-size:9px;padding:2px 8px;border-radius:3px;letter-spacing:1px;font-weight:700;}
+.badge.bos{background:rgba(61,158,255,.15);color:var(--blue);}
+.badge.choch{background:rgba(155,93,229,.15);color:var(--purple);}
+.badge.ob-bull{background:rgba(0,229,160,.1);color:var(--buy);}
+.badge.ob-bear{background:rgba(255,61,90,.1);color:var(--sell);}
+.badge.fvg{background:rgba(255,140,66,.1);color:var(--orange);}
+.badge.sweep{background:rgba(255,61,90,.08);color:var(--sell);}
 
-        /* Swipe Indicator */
-        .swipe-indicator {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 14px;
-            text-align: center;
-            animation: pulse-glow 3s ease-in-out infinite;
-            z-index: 20;
-        }
+/* ── BACKTEST ── */
+.bt-controls{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;align-items:flex-end;}
+.bt-field{display:flex;flex-direction:column;gap:5px;}
+.bt-label{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+.bt-input{background:var(--s1);border:1.5px solid var(--border2);border-radius:8px;
+  color:var(--text);font-family:var(--mono);font-size:13px;padding:8px 12px;outline:none;width:130px;}
+.bt-input:focus{border-color:var(--gold);}
+select.bt-input{cursor:pointer;}
 
-        @keyframes pulse-glow {
-            0%, 100% { opacity: 0.6; text-shadow: 0 0 5px rgba(0, 255, 255, 0.3); }
-            50% { opacity: 1; text-shadow: 0 0 15px rgba(0, 255, 255, 0.6); }
-        }
+.btn-primary{padding:10px 20px;border:none;border-radius:8px;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:#000;font-family:var(--body);font-size:13px;font-weight:800;
+  cursor:pointer;transition:transform .15s,box-shadow .15s;white-space:nowrap;
+  box-shadow:0 4px 16px rgba(245,197,24,.3);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(245,197,24,.45);}
+.btn-primary:active{transform:scale(.97);}
 
-        /* Shooting Stars */
-        .shooting-star {
-            position: absolute;
-            width: 2px;
-            height: 2px;
-            background: linear-gradient(45deg, transparent, #fff, transparent);
-            animation: shoot 3s linear infinite;
-        }
+.btn-sec{padding:10px 16px;border-radius:8px;border:1.5px solid var(--border2);
+  background:var(--s1);color:var(--muted);font-family:var(--mono);font-size:11px;
+  cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn-sec:hover{border-color:var(--blue);color:var(--blue);}
 
-        @keyframes shoot {
-            0% {
-                transform: translateX(-100px) translateY(100px);
-                opacity: 0;
-            }
-            50% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateX(100vw) translateY(-100px);
-                opacity: 0;
-            }
-        }
+/* ── BACKTEST RESULTS ── */
+.bt-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:16px;}
 
-        /* Space Particles */
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: radial-gradient(circle, #00ffff, transparent);
-            border-radius: 50%;
-            animation: drift 15s linear infinite;
-        }
+.bt-trades{background:var(--s1);border:1px solid var(--border);border-radius:12px;overflow:hidden;max-height:400px;overflow-y:auto;}
+.bt-head{display:grid;grid-template-columns:60px 90px 90px 90px 70px 70px 60px;
+  padding:10px 14px;background:var(--s0);border-bottom:1px solid var(--border);
+  font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);
+  position:sticky;top:0;}
+.bt-row{display:grid;grid-template-columns:60px 90px 90px 90px 70px 70px 60px;
+  padding:9px 14px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;}
+.bt-row:last-child{border:none;}
+.bt-row.win{background:rgba(0,229,160,.03);}
+.bt-row.lose{background:rgba(255,61,90,.03);}
+.win-badge{color:var(--buy);}
+.lose-badge{color:var(--sell);}
 
-        @keyframes drift {
-            0% {
-                transform: translateY(100vh) translateX(0);
-                opacity: 0;
-            }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% {
-                transform: translateY(-100px) translateX(200px);
-                opacity: 0;
-            }
-        }
+/* ── TELEGRAM SETUP ── */
+.tg-card{background:var(--s1);border:1.5px solid rgba(61,158,255,.2);border-radius:12px;padding:20px;margin-bottom:14px;}
+.tg-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--blue);margin-bottom:14px;}
+.tg-field{margin-bottom:12px;}
+.tg-label{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:6px;letter-spacing:.5px;}
+.tg-inp{width:100%;background:var(--s0);border:1.5px solid var(--border2);border-radius:8px;
+  color:var(--text);font-family:var(--mono);font-size:13px;padding:10px 12px;outline:none;transition:border-color .2s;}
+.tg-inp:focus{border-color:var(--blue);}
+.tg-hint{font-size:10px;color:var(--muted2);margin-top:4px;line-height:1.5;}
+.tg-hint a{color:var(--blue);}
+.btn-tg{width:100%;padding:12px;border-radius:8px;border:1.5px solid rgba(61,158,255,.3);
+  background:rgba(61,158,255,.1);color:var(--blue);font-family:var(--mono);font-size:12px;
+  font-weight:700;cursor:pointer;transition:all .15s;margin-top:6px;}
+.btn-tg:hover{background:rgba(61,158,255,.2);}
+.tg-status{font-family:var(--mono);font-size:11px;text-align:center;margin-top:8px;min-height:16px;}
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .swipe-indicator {
-                bottom: 20px;
-                font-size: 12px;
-            }
-            
-            .planet.earth { width: 40px; height: 40px; }
-            .planet.mars { width: 30px; height: 30px; }
-        }
-    </style>
+/* ── LOADING ── */
+.loading-overlay{
+  position:fixed;inset:0;background:rgba(7,9,16,.85);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:999;backdrop-filter:blur(4px);display:none;
+}
+.loading-overlay.show{display:flex;}
+.spinner{width:40px;height:40px;border:3px solid var(--border2);border-top-color:var(--gold);
+  border-radius:50%;animation:spin 1s linear infinite;margin-bottom:14px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:1px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--s2);border:1px solid var(--border2);font-family:var(--mono);font-size:12px;
+  color:var(--text);padding:10px 20px;border-radius:8px;opacity:0;transition:all .3s;
+  z-index:9999;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.ok{border-color:var(--buy);color:var(--buy);}
+.toast.fail{border-color:var(--sell);color:var(--sell);}
+
+/* ── MISC ── */
+.sec-title{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.empty{text-align:center;font-family:var(--mono);font-size:12px;color:var(--muted2);padding:40px;}
+.scrollable{max-height:340px;overflow-y:auto;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--s0);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+@media(max-width:600px){
+  .st-head,.st-row{grid-template-columns:70px 1fr 90px 70px;}
+  .st-head span:nth-child(5),.st-row span:nth-child(5){display:none;}
+  .bt-head,.bt-row{grid-template-columns:50px 80px 80px 70px 60px 50px;}
+  .bt-head span:nth-child(7),.bt-row span:nth-child(7){display:none;}
+}
+</style>
 </head>
 <body>
-    <div class="stars" id="starsContainer"></div>
-    
-    <!-- Planets -->
-    <div class="planet earth"></div>
-    <div class="planet mars"></div>
-    
-    <div class="center-3d">
-        <div class="main-3d-text" id="main3dText">I LOVE YOU</div>
+<div class="app">
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">XAU ANALYST<span>SMC · ICT · GANN</span></div>
+  <div class="topbar-right">
+    <div class="api-input-wrap">
+      <span class="api-label">API KEY</span>
+      <input class="api-input" id="apiKey" type="password" placeholder="Twelve Data API key…"/>
     </div>
-    
-    <div class="swipe-indicator">
-        👆 Tap screen or swipe to control love 💕<br>
-        <span style="font-size: 12px; opacity: 0.8;">↔️ Swipe left/right to rotate • ↕️ Swipe up/down for effects</span>
+    <div class="dot" id="connDot"></div>
+    <div>
+      <div class="price-live" id="livePrice">—</div>
+      <div class="price-chg" id="priceChg">XAUUSD</div>
     </div>
+    <button class="btn-primary" onclick="startAnalysis()" style="padding:8px 16px;font-size:12px;">▶ ANALISA</button>
+  </div>
+</div>
 
-    <script>
-        const loveMessages = [
-            "I LOVE YOU💕", "💕", "❤️", "💕", "I LOVE YOU💕", "I LOVE YOU💕", 
-            "I LOVE YOU💕", "I LOVE YOU💕❤️", "I LOVE YOU💕❤️", "💖", "I LOVE YOU💕❤️", 
-            "I LOVE YOU💕❤️", "💘", "I LOVE YOU💕❤️", "💗", "I LOVE YOU💕❤️", "I LOVE YOU💕❤️", "I LOVE YOU💕❤️I LOVE YOU💕❤️"
-        ];
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('signal')">📡 Sinyal</div>
+  <div class="tab" onclick="switchTab('structure')">🏗 Struktur SMC</div>
+  <div class="tab" onclick="switchTab('backtest')">📊 Backtest</div>
+  <div class="tab" onclick="switchTab('telegram')">✈️ Telegram</div>
+</div>
 
-        const spaceColors = [
-            "#00ffff", "#ff1493", "#00ff00", "#ffff00", "#ff4500", 
-            "#8a2be2", "#ff69b4", "#00bfff", "#lime", "#ffa500"
-        ];
+<!-- ══════════ SIGNAL PANEL ══════════ -->
+<div class="panel active" id="panel-signal">
 
-        let rotationAngle = 0;
-        let isWarpMode = false;
-        let startX = 0;
-        let startY = 0;
-        let currentRotationX = -15;
-        let currentRotationY = 0;
+  <div class="signal-banner neutral" id="signalBanner">
+    <div class="sig-left">
+      <div class="sig-dir neutral" id="sigDir">WAIT</div>
+      <div class="sig-sub" id="sigSub">Belum ada analisa — masukkan API key & klik ANALISA</div>
+    </div>
+    <div class="sig-right">
+      <div class="sig-box"><div class="sig-box-label e">ENTRY</div><div class="sig-box-val" id="sigEntry">—</div></div>
+      <div class="sig-box"><div class="sig-box-label sl">STOP LOSS</div><div class="sig-box-val" id="sigSL">—</div></div>
+      <div class="sig-box"><div class="sig-box-label tp">TAKE PROFIT</div><div class="sig-box-val" id="sigTP">—</div></div>
+      <div class="sig-box"><div class="sig-box-label rr">R:R</div><div class="sig-box-val" id="sigRR">—</div></div>
+    </div>
+  </div>
 
-        // Generate Stars
-        function createStars() {
-            const container = document.getElementById('starsContainer');
-            for (let i = 0; i < 200; i++) {
-                const star = document.createElement('div');
-                star.className = `star ${['small', 'medium', 'large'][Math.floor(Math.random() * 3)]}`;
-                star.style.left = Math.random() * 100 + '%';
-                star.style.top = Math.random() * 100 + '%';
-                star.style.animationDelay = Math.random() * 3 + 's';
-                container.appendChild(star);
-            }
-        }
+  <div class="reasons" id="reasonChips"></div>
 
-        // Generate Space Particles
-        function createSpaceParticles() {
-            for (let i = 0; i < 30; i++) {
-                setTimeout(() => {
-                    const particle = document.createElement('div');
-                    particle.className = 'particle';
-                    particle.style.left = Math.random() * 100 + '%';
-                    particle.style.animationDelay = Math.random() * 15 + 's';
-                    document.body.appendChild(particle);
-                    
-                    setTimeout(() => {
-                        particle.remove();
-                    }, 15000);
-                }, Math.random() * 5000);
-            }
-        }
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">H1 Bias</div><div class="stat-val gold" id="stBias">—</div></div>
+    <div class="stat-card"><div class="stat-label">BOS Terakhir</div><div class="stat-val blue" id="stBOS">—</div></div>
+    <div class="stat-card"><div class="stat-label">Order Block</div><div class="stat-val gold" id="stOB">—</div></div>
+    <div class="stat-card"><div class="stat-label">FVG Aktif</div><div class="stat-val" id="stFVG" style="color:var(--orange)">—</div></div>
+    <div class="stat-card"><div class="stat-label">Liq. Sweep</div><div class="stat-val sell" id="stSweep">—</div></div>
+    <div class="stat-card"><div class="stat-label">Strength</div><div class="stat-val buy" id="stStrength">—</div></div>
+  </div>
 
-        // Create Falling Love Text
-        function createFallingLove() {
-            const love = document.createElement('div');
-            love.className = 'falling-love';
-            love.textContent = loveMessages[Math.floor(Math.random() * loveMessages.length)];
-            
-            love.style.left = Math.random() * 100 + '%';
-            love.style.top = '-50px';
-            love.style.fontSize = (Math.random() * 25 + 20) + 'px';
-            love.style.color = spaceColors[Math.floor(Math.random() * spaceColors.length)];
-            
-            const duration = Math.random() * 4 + 6;
-            love.style.animation = `fallSpace ${duration}s linear`;
-            
-            document.body.appendChild(love);
-            
-            setTimeout(() => {
-                love.remove();
-            }, duration * 1000);
-        }
+  <div class="chart-wrap">
+    <div class="chart-title">
+      <span>XAUUSD — H1 PRICE ACTION</span>
+      <span style="color:var(--muted2);font-size:9px;" id="chartUpdated"></span>
+    </div>
+    <div class="chart-container"><canvas id="priceChart"></canvas></div>
+  </div>
 
-        // Launch Love Rain
-        function launchLoveRain() {
-            for (let i = 0; i < 20; i++) {
-                setTimeout(createFallingLove, i * 300);
-            }
-        }
+  <div class="chart-wrap">
+    <div class="chart-title"><span>M5 — ENTRY ZONE</span></div>
+    <div class="chart-container"><canvas id="m5Chart"></canvas></div>
+  </div>
 
-        // Warp Speed Effect
-        function activateWarpSpeed() {
-            isWarpMode = !isWarpMode;
-            const stars = document.querySelectorAll('.star');
-            
-            stars.forEach(star => {
-                if (isWarpMode) {
-                    star.style.animation = 'shoot 0.5s linear infinite';
-                } else {
-                    star.style.animation = 'twinkle 3s ease-in-out infinite';
-                }
-            });
-            
-            if (isWarpMode) {
-                for (let i = 0; i < 10; i++) {
-                    setTimeout(createFallingLove, i * 100);
-                }
-            }
-        }
+</div>
 
-        // Rotate 3D Text
-        function rotate3DText() {
-            const text = document.getElementById('main3dText');
-            rotationAngle += 45;
-            text.style.transform = `rotateY(${rotationAngle}deg) rotateX(${rotationAngle/2}deg)`;
-            
-            // Change color on rotation
-            const randomColor1 = spaceColors[Math.floor(Math.random() * spaceColors.length)];
-            const randomColor2 = spaceColors[Math.floor(Math.random() * spaceColors.length)];
-            const randomColor3 = spaceColors[Math.floor(Math.random() * spaceColors.length)];
-            
-            text.style.textShadow = `
-                0 0 30px ${randomColor1},
-                0 0 60px ${randomColor2},
-                0 0 90px ${randomColor3}
-            `;
-        }
+<!-- ══════════ STRUCTURE PANEL ══════════ -->
+<div class="panel" id="panel-structure">
+  <div class="sec-title" style="margin-bottom:14px;">Market Structure — H1</div>
 
-        // Create Shooting Stars
-        function createShootingStars() {
-            for (let i = 0; i < 5; i++) {
-                setTimeout(() => {
-                    const shootingStar = document.createElement('div');
-                    shootingStar.className = 'shooting-star';
-                    shootingStar.style.top = Math.random() * 50 + '%';
-                    shootingStar.style.left = '-100px';
-                    document.body.appendChild(shootingStar);
-                    
-                    setTimeout(() => {
-                        shootingStar.remove();
-                    }, 3000);
-                }, i * 800);
-            }
-        }
+  <div class="struct-table">
+    <div class="st-head">
+      <span>Candle</span><span>Type</span><span>Level</span><span>Arah</span><span>Status</span>
+    </div>
+    <div id="structBody"><div class="empty">Jalankan analisa terlebih dahulu</div></div>
+  </div>
 
-        // Touch/Swipe Controls
-        let isTouching = false;
+  <div class="sec-title" style="margin-top:16px;margin-bottom:10px;">Fair Value Gaps (FVG)</div>
+  <div class="struct-table">
+    <div class="st-head">
+      <span>Candle</span><span>Tipe</span><span>Range</span><span>Size</span><span>Status</span>
+    </div>
+    <div id="fvgBody"><div class="empty">Jalankan analisa terlebih dahulu</div></div>
+  </div>
 
-        document.addEventListener('touchstart', function(e) {
-            isTouching = true;
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-        }, { passive: true });
+  <div class="sec-title" style="margin-top:16px;margin-bottom:10px;">Order Blocks</div>
+  <div class="struct-table">
+    <div class="st-head">
+      <span>Candle</span><span>Jenis</span><span>Level</span><span>Strength</span><span>Status</span>
+    </div>
+    <div id="obBody"><div class="empty">Jalankan analisa terlebih dahulu</div></div>
+  </div>
+</div>
 
-        document.addEventListener('touchmove', function(e) {
-            if (!isTouching) return;
-            e.preventDefault();
-            
-            const currentX = e.touches[0].clientX;
-            const currentY = e.touches[0].clientY;
-            const deltaX = currentX - startX;
-            const deltaY = currentY - startY;
-            
-            // Rotate 3D text based on swipe
-            currentRotationY += deltaX * 0.2;
-            currentRotationX -= deltaY * 0.2;
-            
-            // Limit rotation
-            currentRotationX = Math.max(-60, Math.min(60, currentRotationX));
-            
-            const text = document.getElementById('main3dText');
-            text.style.transform = `rotateY(${currentRotationY}deg) rotateX(${currentRotationX}deg)`;
-            
-            // Change colors based on rotation intensity
-            const intensity = Math.abs(deltaX) + Math.abs(deltaY);
-            if (intensity > 50) {
-                const randomColor1 = spaceColors[Math.floor(Math.random() * spaceColors.length)];
-                const randomColor2 = spaceColors[Math.floor(Math.random() * spaceColors.length)];
-                const randomColor3 = spaceColors[Math.floor(Math.random() * spaceColors.length)];
-                
-                text.style.textShadow = `
-                    0 0 ${30 + intensity/10}px ${randomColor1},
-                    0 0 ${60 + intensity/5}px ${randomColor2},
-                    0 0 ${90 + intensity/3}px ${randomColor3}
-                `;
-            }
-            
-            startX = currentX;
-            startY = currentY;
-        }, { passive: false });
+<!-- ══════════ BACKTEST PANEL ══════════ -->
+<div class="panel" id="panel-backtest">
+  <div class="bt-controls">
+    <div class="bt-field">
+      <span class="bt-label">Periode</span>
+      <select class="bt-input" id="btPeriod">
+        <option value="90">90 hari</option>
+        <option value="60">60 hari</option>
+        <option value="30" selected>30 hari</option>
+        <option value="14">14 hari</option>
+      </select>
+    </div>
+    <div class="bt-field">
+      <span class="bt-label">RR Target</span>
+      <input type="number" class="bt-input" id="btRR" value="2" min="1" max="10" step="0.5"/>
+    </div>
+    <div class="bt-field">
+      <span class="bt-label">SL (pips)</span>
+      <input type="number" class="bt-input" id="btSL" value="15" min="5" max="100"/>
+    </div>
+    <div class="bt-field">
+      <span class="bt-label">Strategi</span>
+      <select class="bt-input" id="btStrategy">
+        <option value="smc">SMC Full</option>
+        <option value="ob">OB + BOS</option>
+        <option value="fvg">FVG Entry</option>
+        <option value="choch">CHoCH Reversal</option>
+      </select>
+    </div>
+    <button class="btn-primary" onclick="runBacktest()">▶ RUN BACKTEST</button>
+    <button class="btn-sec" onclick="exportCSV()">⬇ Export CSV</button>
+  </div>
 
-        document.addEventListener('touchend', function(e) {
-            isTouching = false;
-            
-            // Trigger effects based on final position
-            const finalX = Math.abs(currentRotationY) % 360;
-            const finalY = Math.abs(currentRotationX);
-            
-            if (finalX > 45 && finalX < 135) {
-                launchLoveRain();
-            } else if (finalX > 135 && finalX < 225) {
-                activateWarpSpeed();
-            } else if (finalX > 225 && finalX < 315) {
-                createShootingStars();
-            }
-            
-            if (finalY > 30) {
-                createFallingLove();
-                createFallingLove();
-                createFallingLove();
-            }
-        });
+  <div class="bt-summary" id="btSummary"></div>
 
-        // Mouse Controls for Desktop
-        let isMouseDown = false;
+  <div class="chart-wrap">
+    <div class="chart-title"><span>EQUITY CURVE</span></div>
+    <div class="chart-container"><canvas id="equityChart"></canvas></div>
+  </div>
 
-        document.addEventListener('mousedown', function(e) {
-            isMouseDown = true;
-            startX = e.clientX;
-            startY = e.clientY;
-        });
+  <div class="chart-wrap">
+    <div class="chart-title"><span>WIN / LOSE DISTRIBUTION</span></div>
+    <div class="chart-container" style="height:200px;"><canvas id="wlChart"></canvas></div>
+  </div>
 
-        document.addEventListener('mousemove', function(e) {
-            if (!isMouseDown) return;
-            
-            const deltaX = e.clientX - startX;
-            const deltaY = e.clientY - startY;
-            
-            currentRotationY += deltaX * 0.3;
-            currentRotationX -= deltaY * 0.3;
-            
-            currentRotationX = Math.max(-60, Math.min(60, currentRotationX));
-            
-            const text = document.getElementById('main3dText');
-            text.style.transform = `rotateY(${currentRotationY}deg) rotateX(${currentRotationX}deg)`;
-            
-            // Color change effect
-            const intensity = Math.abs(deltaX) + Math.abs(deltaY);
-            if (intensity > 30) {
-                const randomColor1 = spaceColors[Math.floor(Math.random() * spaceColors.length)];
-                const randomColor2 = spaceColors[Math.floor(Math.random() * spaceColors.length)];
-                const randomColor3 = spaceColors[Math.floor(Math.random() * spaceColors.length)];
-                
-                text.style.textShadow = `
-                    0 0 ${30 + intensity/8}px ${randomColor1},
-                    0 0 ${60 + intensity/4}px ${randomColor2},
-                    0 0 ${90 + intensity/3}px ${randomColor3}
-                `;
-            }
-            
-            startX = e.clientX;
-            startY = e.clientY;
-        });
+  <div class="sec-title" style="margin-bottom:10px;">Trade Log</div>
+  <div class="bt-trades">
+    <div class="bt-head">
+      <span>#</span><span>Date</span><span>Entry</span><span>Exit</span><span>PnL</span><span>RR</span><span>Result</span>
+    </div>
+    <div id="btTradeLog"><div class="empty">Jalankan backtest terlebih dahulu</div></div>
+  </div>
+</div>
 
-        document.addEventListener('mouseup', function(e) {
-            isMouseDown = false;
-            
-            // Random effects on mouse release
-            if (Math.random() < 0.4) {
-                createFallingLove();
-            }
-            if (Math.random() < 0.2) {
-                createShootingStars();
-            }
-        });
+<!-- ══════════ TELEGRAM PANEL ══════════ -->
+<div class="panel" id="panel-telegram">
+  <div class="tg-card">
+    <div class="tg-title">✈️ Konfigurasi Telegram Bot</div>
+    <div class="tg-field">
+      <div class="tg-label">Bot Token</div>
+      <input class="tg-inp" type="password" id="tgToken" placeholder="123456:ABC-xxxx"/>
+      <div class="tg-hint">Buat via <a href="https://t.me/BotFather" target="_blank">@BotFather</a> → /newbot</div>
+    </div>
+    <div class="tg-field">
+      <div class="tg-label">Chat ID</div>
+      <input class="tg-inp" type="text" id="tgChatId" placeholder="-100xxx atau @channel"/>
+      <div class="tg-hint">Cek via <a href="https://t.me/getmyid_bot" target="_blank">@getmyid_bot</a></div>
+    </div>
+    <div class="tg-field">
+      <div class="tg-label">Auto-kirim sinyal setiap</div>
+      <select class="tg-inp" id="tgInterval">
+        <option value="0">Manual saja</option>
+        <option value="15">15 menit</option>
+        <option value="60">1 jam</option>
+        <option value="240">4 jam</option>
+      </select>
+    </div>
+    <button class="btn-tg" onclick="saveTgConfig()">💾 Simpan</button>
+    <button class="btn-tg" onclick="testTg()" style="background:rgba(0,229,160,.08);color:var(--buy);border-color:rgba(0,229,160,.2);margin-top:6px;">🔔 Test Kirim</button>
+    <button class="btn-tg" onclick="sendCurrentSignal()" style="margin-top:6px;">📡 Kirim Sinyal Sekarang</button>
+    <div class="tg-status" id="tgStatus"></div>
+  </div>
 
-        // Add ripple animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes ripple {
-                0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
-                100% { transform: translate(-50%, -50%) scale(4); opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
+  <div class="tg-card" style="border-color:var(--border);background:var(--s0);">
+    <div class="tg-title" style="color:var(--gold);">📋 Cara Setup</div>
+    <div style="font-size:11px;color:var(--muted);line-height:2;font-family:var(--mono);">
+      1. Chat <a href="https://t.me/BotFather" target="_blank" style="color:var(--blue);">@BotFather</a> → /newbot<br>
+      2. Copy token → paste di atas<br>
+      3. Cari Chat ID via @getmyid_bot<br>
+      4. Klik Test Kirim → verifikasi ✅<br>
+      5. Set auto-interval jika mau sinyal otomatis<br>
+      6. Jalankan Analisa → Kirim Sinyal Sekarang
+    </div>
+  </div>
+</div>
 
-        // Auto rotate 3D text
-        setInterval(() => {
-            if (Math.random() < 0.3) {
-                rotate3DText();
-            }
-        }, 5000);
+</div><!-- /app -->
 
-        // Auto falling love
-        setInterval(createFallingLove, 3000);
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">Mengambil data XAUUSD…</div>
+</div>
 
-        // Auto shooting stars
-        setInterval(createShootingStars, 15000);
+<div class="toast" id="toast"></div>
 
-        // Initialize
-        function init() {
-            createStars();
-            createSpaceParticles();
-            
-            // Initial love rain
-            setTimeout(() => {
-                for (let i = 0; i < 8; i++) {
-                    setTimeout(createFallingLove, i * 800);
-                }
-            }, 2000);
-        }
+<script>
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let h1Candles=[], m5Candles=[], currentSignal=null;
+let priceChartInst=null, m5ChartInst=null, equityChartInst=null, wlChartInst=null;
+let autoInterval=null;
+let lastPrice=0, prevPrice=0;
 
-        // Start everything
-        window.addEventListener('load', init);
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
-        }
-    </script>
+// ═══════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════
+function switchTab(name){
+  const names=['signal','structure','backtest','telegram'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',names[i]===name));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+name));
+}
+
+// ═══════════════════════════════════════════════
+//  API / DATA
+// ═══════════════════════════════════════════════
+function getKey(){ return document.getElementById('apiKey').value.trim() || localStorage.getItem('td_apikey')||''; }
+
+async function fetchCandles(interval, outputsize=100){
+  const key=getKey();
+  if(!key){ showToast('Masukkan API key Twelve Data','fail'); return null; }
+  const url=`https://api.twelvedata.com/time_series?symbol=XAU/USD&interval=${interval}&outputsize=${outputsize}&apikey=${key}&format=JSON`;
+  const res=await fetch(url);
+  const data=await res.json();
+  if(data.status==='error'){ showToast('API: '+data.message,'fail'); return null; }
+  if(!data.values){ showToast('Data kosong dari API','fail'); return null; }
+  return data.values.reverse().map(c=>({
+    t: c.datetime,
+    o: parseFloat(c.open),
+    h: parseFloat(c.high),
+    l: parseFloat(c.low),
+    c: parseFloat(c.close),
+  }));
+}
+
+async function fetchPrice(){
+  const key=getKey();
+  if(!key) return;
+  try{
+    const res=await fetch(`https://api.twelvedata.com/price?symbol=XAU/USD&apikey=${key}`);
+    const d=await res.json();
+    if(d.price){
+      prevPrice=lastPrice||parseFloat(d.price);
+      lastPrice=parseFloat(d.price);
+      document.getElementById('livePrice').textContent=lastPrice.toFixed(2);
+      const chg=lastPrice-prevPrice;
+      const el=document.getElementById('priceChg');
+      el.textContent=(chg>=0?'+':'')+chg.toFixed(2)+' | XAUUSD';
+      el.className='price-chg '+(chg>=0?'up':'dn');
+      document.getElementById('connDot').className='dot live';
+    }
+  }catch(e){}
+}
+
+// ═══════════════════════════════════════════════
+//  SMC / ICT ENGINE
+// ═══════════════════════════════════════════════
+function detectSwings(candles, lookback=3){
+  const swings=[];
+  for(let i=lookback;i<candles.length-lookback;i++){
+    const c=candles[i];
+    let isHH=true,isLL=true;
+    for(let j=i-lookback;j<=i+lookback;j++){
+      if(j===i)continue;
+      if(candles[j].h>=c.h)isHH=false;
+      if(candles[j].l<=c.l)isLL=false;
+    }
+    if(isHH)swings.push({i,type:'HH',price:c.h,t:c.t});
+    if(isLL)swings.push({i,type:'LL',price:c.l,t:c.t});
+  }
+  return swings;
+}
+
+function detectBOS(candles, swings){
+  const events=[];
+  for(let i=5;i<candles.length;i++){
+    const c=candles[i];
+    swings.forEach(sw=>{
+      if(sw.i>=i)return;
+      if(sw.type==='HH' && c.c>sw.price && !sw.broken){
+        sw.broken=true;
+        events.push({i,type:'BOS',dir:'BULL',level:sw.price,t:c.t,label:'BOS ▲'});
+      }
+      if(sw.type==='LL' && c.c<sw.price && !sw.broken){
+        sw.broken=true;
+        events.push({i,type:'BOS',dir:'BEAR',level:sw.price,t:c.t,label:'BOS ▼'});
+      }
+    });
+  }
+  return events;
+}
+
+function detectCHoCH(candles, bos){
+  const events=[];
+  let lastBull=null,lastBear=null;
+  bos.forEach(b=>{
+    if(b.dir==='BULL'){
+      if(lastBear){ events.push({...b,type:'CHoCH',label:'CHoCH ▲ (Reversal Bullish)'}); }
+      lastBull=b;
+    } else {
+      if(lastBull){ events.push({...b,type:'CHoCH',label:'CHoCH ▼ (Reversal Bearish)'}); }
+      lastBear=b;
+    }
+  });
+  return events;
+}
+
+function detectOrderBlocks(candles, bos){
+  const obs=[];
+  bos.forEach(b=>{
+    const idx=b.i;
+    // Look for last opposing candle before BOS
+    for(let j=idx-1;j>=Math.max(0,idx-10);j--){
+      const c=candles[j];
+      if(b.dir==='BULL' && c.c<c.o){ // bearish candle before bullish BOS
+        obs.push({i:j,type:'Bullish OB',top:c.o,bot:c.l,t:c.t,strength:Math.abs(c.o-c.c),bosDir:b.dir});
+        break;
+      }
+      if(b.dir==='BEAR' && c.c>c.o){ // bullish candle before bearish BOS
+        obs.push({i:j,type:'Bearish OB',top:c.h,bot:c.c,t:c.t,strength:Math.abs(c.c-c.o),bosDir:b.dir});
+        break;
+      }
+    }
+  });
+  return obs;
+}
+
+function detectFVG(candles){
+  const fvgs=[];
+  for(let i=2;i<candles.length;i++){
+    const prev=candles[i-2],curr=candles[i];
+    if(curr.l>candles[i-1].h){ // Bullish FVG
+      fvgs.push({i,type:'Bullish FVG',top:curr.l,bot:candles[i-1].h,t:curr.t,size:curr.l-candles[i-1].h});
+    }
+    if(curr.h<candles[i-1].l){ // Bearish FVG
+      fvgs.push({i,type:'Bearish FVG',top:candles[i-1].l,bot:curr.h,t:curr.t,size:candles[i-1].l-curr.h});
+    }
+  }
+  return fvgs.slice(-20);
+}
+
+function detectLiquiditySweep(candles, swings){
+  const sweeps=[];
+  for(let i=1;i<candles.length;i++){
+    const c=candles[i],prev=candles[i-1];
+    swings.forEach(sw=>{
+      if(sw.i>=i-1)return;
+      if(sw.type==='HH' && c.h>sw.price && c.c<sw.price){
+        sweeps.push({i,type:'Sweep High',level:sw.price,t:c.t});
+      }
+      if(sw.type==='LL' && c.l<sw.price && c.c>sw.price){
+        sweeps.push({i,type:'Sweep Low',level:sw.price,t:c.t});
+      }
+    });
+  }
+  return sweeps.slice(-10);
+}
+
+function determineBias(candles, bos){
+  if(bos.length===0)return'NEUTRAL';
+  const last3=bos.slice(-3);
+  const bullCount=last3.filter(b=>b.dir==='BULL').length;
+  const bearCount=last3.filter(b=>b.dir==='BEAR').length;
+  if(bullCount>bearCount)return'BULLISH';
+  if(bearCount>bullCount)return'BEARISH';
+  return'NEUTRAL';
+}
+
+function generateSignal(candles, bos, choch, obs, fvgs, sweeps, bias){
+  const last=candles[candles.length-1];
+  const price=last.c;
+  const reasons=[];
+  let dir='WAIT', entry=price, sl=price, tp=price;
+
+  const lastBOS=bos[bos.length-1];
+  const lastCHoCH=choch[choch.length-1];
+  const lastSweep=sweeps[sweeps.length-1];
+
+  // Bias direction
+  if(bias==='BULLISH'){
+    // Look for bullish OB near price
+    const nearOB=obs.filter(o=>o.type==='Bullish OB' && price>o.bot && price<o.top+5).slice(-1)[0];
+    const nearFVG=fvgs.filter(f=>f.type==='Bullish FVG' && price>f.bot && price<f.top+5).slice(-1)[0];
+    const hasSweep=lastSweep&&lastSweep.type==='Sweep Low'&&lastSweep.i===candles.length-1;
+
+    if(lastBOS&&lastBOS.dir==='BULL') reasons.push({label:'BOS BULLISH',cls:'bos'});
+    if(nearOB) reasons.push({label:'OB BULLISH',cls:'ob'});
+    if(nearFVG) reasons.push({label:'FVG BULLISH',cls:'fvg'});
+    if(hasSweep) reasons.push({label:'LIQUIDITY SWEEP',cls:'sweep'});
+    if(lastCHoCH&&lastCHoCH.dir==='BULL') reasons.push({label:'CHoCH BULLISH',cls:'choch'});
+
+    const score=reasons.length;
+    if(score>=2){
+      dir='BUY';
+      entry=price;
+      sl=nearOB?nearOB.bot-1:price-15;
+      const riskPips=Math.abs(entry-sl);
+      tp=entry+riskPips*2;
+    }
+  } else if(bias==='BEARISH'){
+    const nearOB=obs.filter(o=>o.type==='Bearish OB' && price<o.top && price>o.bot-5).slice(-1)[0];
+    const nearFVG=fvgs.filter(f=>f.type==='Bearish FVG' && price<f.top && price>f.bot-5).slice(-1)[0];
+    const hasSweep=lastSweep&&lastSweep.type==='Sweep High'&&lastSweep.i===candles.length-1;
+
+    if(lastBOS&&lastBOS.dir==='BEAR') reasons.push({label:'BOS BEARISH',cls:'bos'});
+    if(nearOB) reasons.push({label:'OB BEARISH',cls:'ob'});
+    if(nearFVG) reasons.push({label:'FVG BEARISH',cls:'fvg'});
+    if(hasSweep) reasons.push({label:'LIQUIDITY SWEEP',cls:'sweep'});
+    if(lastCHoCH&&lastCHoCH.dir==='BEAR') reasons.push({label:'CHoCH BEARISH',cls:'choch'});
+
+    const score=reasons.length;
+    if(score>=2){
+      dir='SELL';
+      entry=price;
+      sl=nearOB?nearOB.top+1:price+15;
+      const riskPips=Math.abs(sl-entry);
+      tp=entry-riskPips*2;
+    }
+  }
+
+  const risk=Math.abs(entry-sl);
+  const reward=Math.abs(tp-entry);
+  const rr=risk>0?(reward/risk).toFixed(1):'—';
+
+  return {dir,entry:entry.toFixed(2),sl:sl.toFixed(2),tp:tp.toFixed(2),rr,reasons,bias};
+}
+
+// ═══════════════════════════════════════════════
+//  MAIN ANALYSIS
+// ═══════════════════════════════════════════════
+async function startAnalysis(){
+  const key=getKey();
+  if(!key){ showToast('Masukkan API key Twelve Data dulu!','fail'); return; }
+  localStorage.setItem('td_apikey',key);
+
+  showLoading('Mengambil data H1…');
+  const h1=await fetchCandles('1h',150);
+  if(!h1){ hideLoading(); return; }
+  h1Candles=h1;
+
+  setLoadingText('Mengambil data M5…');
+  const m5=await fetchCandles('5min',100);
+  if(!m5){ hideLoading(); return; }
+  m5Candles=m5;
+
+  setLoadingText('Mendeteksi struktur SMC/ICT…');
+  await sleep(400);
+
+  const swings=detectSwings(h1Candles);
+  const bos=detectBOS(h1Candles,swings);
+  const choch=detectCHoCH(h1Candles,bos);
+  const obs=detectOrderBlocks(h1Candles,bos);
+  const fvgs=detectFVG(h1Candles);
+  const sweeps=detectLiquiditySweep(h1Candles,swings);
+  const bias=determineBias(h1Candles,bos);
+  const signal=generateSignal(h1Candles,bos,choch,obs,fvgs,sweeps,bias);
+
+  currentSignal={signal,bos,choch,obs,fvgs,sweeps,swings,bias};
+
+  setLoadingText('Menggambar chart…');
+  await sleep(200);
+
+  renderSignal(signal);
+  renderStructure(bos,choch,obs,fvgs,sweeps);
+  drawH1Chart(h1Candles,bos,obs,fvgs);
+  drawM5Chart(m5Candles);
+  updateStats(bias,bos,obs,fvgs,sweeps,signal);
+
+  hideLoading();
+  fetchPrice();
+  showToast('Analisa selesai! '+new Date().toLocaleTimeString('id-ID'),'ok');
+
+  document.getElementById('chartUpdated').textContent='Update: '+new Date().toLocaleTimeString('id-ID');
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER SIGNAL
+// ═══════════════════════════════════════════════
+function renderSignal(sig){
+  const banner=document.getElementById('signalBanner');
+  const dirEl=document.getElementById('sigDir');
+  banner.className='signal-banner '+(sig.dir==='BUY'?'buy':sig.dir==='SELL'?'sell':'neutral');
+  dirEl.className='sig-dir '+(sig.dir==='BUY'?'buy':sig.dir==='SELL'?'sell':'neutral');
+  dirEl.textContent=sig.dir;
+  document.getElementById('sigSub').textContent=
+    sig.dir==='WAIT'?'Tidak ada konfluensi cukup — tunggu setup yang lebih kuat':
+    `Konfluensi ${sig.reasons.length} faktor — H1 Bias: ${sig.bias}`;
+  document.getElementById('sigEntry').textContent=sig.entry;
+  document.getElementById('sigSL').textContent=sig.sl;
+  document.getElementById('sigTP').textContent=sig.tp;
+  document.getElementById('sigRR').textContent='1:'+sig.rr;
+
+  const rc=document.getElementById('reasonChips');
+  rc.innerHTML='';
+  sig.reasons.forEach(r=>{
+    rc.innerHTML+=`<div class="chip ${r.cls}">${r.label}</div>`;
+  });
+}
+
+function updateStats(bias,bos,obs,fvgs,sweeps,sig){
+  document.getElementById('stBias').textContent=bias;
+  document.getElementById('stBias').style.color=bias==='BULLISH'?'var(--buy)':bias==='BEARISH'?'var(--sell)':'var(--orange)';
+  const lastBOS=bos[bos.length-1];
+  document.getElementById('stBOS').textContent=lastBOS?lastBOS.label:'—';
+  const lastOB=obs[obs.length-1];
+  document.getElementById('stOB').textContent=lastOB?lastOB.type:'—';
+  document.getElementById('stFVG').textContent=fvgs.length+' aktif';
+  const lastSweep=sweeps[sweeps.length-1];
+  document.getElementById('stSweep').textContent=lastSweep?lastSweep.type:'—';
+  document.getElementById('stStrength').textContent=sig.dir!=='WAIT'?(sig.reasons.length*20)+'%':'—';
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER STRUCTURE TABLE
+// ═══════════════════════════════════════════════
+function renderStructure(bos,choch,obs,fvgs,sweeps){
+  // BOS + CHoCH
+  const sb=document.getElementById('structBody');
+  const allStruct=[...bos.slice(-15),...choch.slice(-5)].sort((a,b)=>a.i-b.i);
+  if(allStruct.length===0){sb.innerHTML='<div class="empty">Tidak ada struktur terdeteksi</div>';return;}
+  sb.innerHTML=allStruct.map(e=>`
+    <div class="st-row">
+      <span style="color:var(--muted)">${shortDate(e.t)}</span>
+      <span><span class="badge ${e.type==='CHoCH'?'choch':'bos'}">${e.type}</span></span>
+      <span style="font-family:var(--mono)">${e.level.toFixed(2)}</span>
+      <span style="color:${e.dir==='BULL'?'var(--buy)':'var(--sell)'}">${e.dir}</span>
+      <span style="color:var(--muted);font-size:10px;">${e.label}</span>
+    </div>`).join('');
+
+  // FVG
+  const fb=document.getElementById('fvgBody');
+  if(fvgs.length===0){fb.innerHTML='<div class="empty">Tidak ada FVG terdeteksi</div>';return;}
+  fb.innerHTML=fvgs.slice(-10).map(f=>`
+    <div class="st-row">
+      <span style="color:var(--muted)">${shortDate(f.t)}</span>
+      <span><span class="badge fvg">${f.type}</span></span>
+      <span style="font-family:var(--mono);font-size:10px">${f.bot.toFixed(1)}–${f.top.toFixed(1)}</span>
+      <span style="font-family:var(--mono)">${f.size.toFixed(2)}</span>
+      <span style="color:var(--buy);font-size:10px">OPEN</span>
+    </div>`).join('');
+
+  // OB
+  const ob=document.getElementById('obBody');
+  if(obs.length===0){ob.innerHTML='<div class="empty">Tidak ada OB terdeteksi</div>';return;}
+  ob.innerHTML=obs.slice(-10).map(o=>`
+    <div class="st-row">
+      <span style="color:var(--muted)">${shortDate(o.t)}</span>
+      <span><span class="badge ${o.type.includes('Bull')?'ob-bull':'ob-bear'}">${o.type}</span></span>
+      <span style="font-family:var(--mono);font-size:10px">${o.bot.toFixed(1)}–${o.top.toFixed(1)}</span>
+      <span style="font-family:var(--mono)">${o.strength.toFixed(2)}</span>
+      <span style="color:var(--gold);font-size:10px">VALID</span>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+//  CHARTS
+// ═══════════════════════════════════════════════
+function makeGradient(ctx,colorTop,colorBot){
+  const g=ctx.createLinearGradient(0,0,0,260);
+  g.addColorStop(0,colorTop);g.addColorStop(1,colorBot);return g;
+}
+
+function drawH1Chart(candles,bos,obs,fvgs){
+  const ctx=document.getElementById('priceChart').getContext('2d');
+  if(priceChartInst){priceChartInst.destroy();}
+  const last=candles.slice(-60);
+  const labels=last.map(c=>shortDate(c.t));
+  const closes=last.map(c=>c.c);
+
+  // OB zones as annotations (manual lines)
+  const datasets=[{
+    label:'XAUUSD H1',
+    data:closes,
+    borderColor:'#f5c518',
+    borderWidth:1.5,
+    backgroundColor:makeGradient(ctx,'rgba(245,197,24,.12)','rgba(245,197,24,.0)'),
+    fill:true,
+    tension:.3,
+    pointRadius:0,
+    pointHoverRadius:4,
+  }];
+
+  // Add BOS levels as horizontal line datasets
+  bos.slice(-3).forEach(b=>{
+    const arr=new Array(labels.length).fill(null);
+    const idx=last.findIndex(c=>c.t===b.t);
+    if(idx>=0){
+      for(let i=idx;i<arr.length;i++) arr[i]=b.level;
+    }
+    datasets.push({
+      label:b.label,
+      data:arr,
+      borderColor:b.dir==='BULL'?'rgba(0,229,160,.5)':'rgba(255,61,90,.5)',
+      borderWidth:1,
+      borderDash:[4,4],
+      pointRadius:0,
+      fill:false,
+    });
+  });
+
+  priceChartInst=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      animation:{duration:600},
+      plugins:{legend:{display:false},tooltip:{
+        mode:'index',intersect:false,
+        backgroundColor:'rgba(16,19,30,.95)',borderColor:'#242a3e',borderWidth:1,
+        titleColor:'#7b82a8',bodyColor:'#dde2f2',
+        callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(2)||''}`}
+      }},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#505878',font:{family:'JetBrains Mono',size:9},maxTicksLimit:8}},
+        y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#505878',font:{family:'JetBrains Mono',size:9}},position:'right'}
+      }
+    }
+  });
+}
+
+function drawM5Chart(candles){
+  const ctx=document.getElementById('m5Chart').getContext('2d');
+  if(m5ChartInst){m5ChartInst.destroy();}
+  const last=candles.slice(-40);
+  m5ChartInst=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:last.map(c=>shortTime(c.t)),
+      datasets:[{
+        label:'XAUUSD M5',
+        data:last.map(c=>c.c),
+        borderColor:'#3d9eff',borderWidth:1.5,
+        backgroundColor:makeGradient(ctx,'rgba(61,158,255,.1)','rgba(61,158,255,0)'),
+        fill:true,tension:.3,pointRadius:0,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:{duration:400},
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#505878',font:{family:'JetBrains Mono',size:9},maxTicksLimit:8}},
+        y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#505878',font:{family:'JetBrains Mono',size:9}},position:'right'}
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  BACKTEST ENGINE
+// ═══════════════════════════════════════════════
+async function runBacktest(){
+  const key=getKey();
+  if(!key){ showToast('Masukkan API key dulu','fail'); return; }
+
+  const period=parseInt(document.getElementById('btPeriod').value);
+  const rrTarget=parseFloat(document.getElementById('btRR').value);
+  const slPips=parseFloat(document.getElementById('btSL').value);
+  const strategy=document.getElementById('btStrategy').value;
+
+  showLoading('Mengambil data historis untuk backtest…');
+
+  // Fetch more data for backtest
+  const outputsize=Math.min(500, period*24);
+  const candles=await fetchCandles('1h', outputsize);
+  if(!candles){ hideLoading(); return; }
+
+  setLoadingText('Menjalankan backtest '+strategy.toUpperCase()+'…');
+  await sleep(300);
+
+  const trades=[];
+  const swings=detectSwings(candles);
+  const bos=detectBOS(candles,[...swings]);
+  const obs=detectOrderBlocks(candles,bos);
+  const fvgs=detectFVG(candles);
+  const sweeps=detectLiquiditySweep(candles,swings);
+
+  // Simulate trades
+  for(let i=20;i<candles.length-1;i++){
+    const slice=candles.slice(0,i+1);
+    const localBOS=bos.filter(b=>b.i<=i);
+    const localBias=determineBias(slice,localBOS);
+    const localObs=obs.filter(o=>o.i<=i);
+    const localFvg=fvgs.filter(f=>f.i<=i);
+    const localSweeps=sweeps.filter(s=>s.i<=i);
+    const sig=generateSignal(slice,localBOS,[],localObs,localFvg,localSweeps,localBias);
+
+    if(sig.dir==='WAIT'||sig.reasons.length<2) continue;
+
+    const entry=parseFloat(sig.entry);
+    const sl=parseFloat(sig.sl);
+    const tp=parseFloat(sig.tp);
+    const riskPips=Math.abs(entry-sl);
+    const tpCalc=sig.dir==='BUY'? entry+riskPips*rrTarget : entry-riskPips*rrTarget;
+
+    // Check outcome in next candles
+    let outcome=null, exitPrice=entry, exitIdx=i;
+    for(let j=i+1;j<Math.min(i+50,candles.length);j++){
+      const fc=candles[j];
+      if(sig.dir==='BUY'){
+        if(fc.l<=sl){ outcome='LOSE'; exitPrice=sl; exitIdx=j; break; }
+        if(fc.h>=tpCalc){ outcome='WIN'; exitPrice=tpCalc; exitIdx=j; break; }
+      } else {
+        if(fc.h>=sl){ outcome='LOSE'; exitPrice=sl; exitIdx=j; break; }
+        if(fc.l<=tpCalc){ outcome='WIN'; exitPrice=tpCalc; exitIdx=j; break; }
+      }
+    }
+    if(!outcome) continue;
+
+    const pnl=sig.dir==='BUY'? exitPrice-entry : entry-exitPrice;
+    trades.push({
+      n:trades.length+1,
+      date:candles[i].t,
+      dir:sig.dir,
+      entry:entry.toFixed(2),
+      exit:exitPrice.toFixed(2),
+      pnl:pnl.toFixed(2),
+      rr:(Math.abs(pnl)/riskPips).toFixed(1),
+      outcome,
+      reasons:sig.reasons.length
+    });
+
+    // Skip forward to avoid overlapping trades
+    i=exitIdx;
+  }
+
+  hideLoading();
+  renderBacktest(trades, rrTarget);
+}
+
+function renderBacktest(trades, rr){
+  if(trades.length===0){ showToast('Tidak ada trade yang dieksekusi','fail'); return; }
+
+  const wins=trades.filter(t=>t.outcome==='WIN');
+  const losses=trades.filter(t=>t.outcome==='LOSE');
+  const winrate=(wins.length/trades.length*100).toFixed(1);
+  const totalPnL=trades.reduce((a,t)=>a+parseFloat(t.pnl),0).toFixed(2);
+  const avgWin=wins.length?((wins.reduce((a,t)=>a+parseFloat(t.pnl),0))/wins.length).toFixed(2):'0';
+  const avgLoss=losses.length?((losses.reduce((a,t)=>a+parseFloat(t.pnl),0))/losses.length).toFixed(2):'0';
+  const maxDD=calcMaxDrawdown(trades).toFixed(2);
+  const profitFactor=losses.length && parseFloat(avgLoss)!==0
+    ? (wins.reduce((a,t)=>a+parseFloat(t.pnl),0) / Math.abs(losses.reduce((a,t)=>a+parseFloat(t.pnl),0))).toFixed(2)
+    : '∞';
+
+  // Summary cards
+  document.getElementById('btSummary').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Total Trade</div><div class="stat-val blue">${trades.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Win Rate</div><div class="stat-val ${parseFloat(winrate)>=55?'buy':'sell'}">${winrate}%</div></div>
+    <div class="stat-card"><div class="stat-label">Total PnL</div><div class="stat-val ${parseFloat(totalPnL)>=0?'buy':'sell'}">${totalPnL}</div></div>
+    <div class="stat-card"><div class="stat-label">Profit Factor</div><div class="stat-val gold">${profitFactor}</div></div>
+    <div class="stat-card"><div class="stat-label">Avg Win</div><div class="stat-val buy">+${avgWin}</div></div>
+    <div class="stat-card"><div class="stat-label">Avg Loss</div><div class="stat-val sell">${avgLoss}</div></div>
+    <div class="stat-card"><div class="stat-label">Max Drawdown</div><div class="stat-val sell">${maxDD}</div></div>
+    <div class="stat-card"><div class="stat-label">RR Target</div><div class="stat-val gold">1:${rr}</div></div>
+  `;
+
+  // Equity curve
+  let equity=0;
+  const equityArr=trades.map(t=>{ equity+=parseFloat(t.pnl); return equity; });
+  const ctx=document.getElementById('equityChart').getContext('2d');
+  if(equityChartInst) equityChartInst.destroy();
+  equityChartInst=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:trades.map(t=>'#'+t.n),
+      datasets:[{
+        label:'Equity',data:equityArr,
+        borderColor:parseFloat(totalPnL)>=0?'var(--buy)':'var(--sell)',
+        borderWidth:2,
+        backgroundColor:parseFloat(totalPnL)>=0?'rgba(0,229,160,.08)':'rgba(255,61,90,.08)',
+        fill:true,tension:.3,pointRadius:0,
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#505878',font:{family:'JetBrains Mono',size:9}}},
+        y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#505878',font:{family:'JetBrains Mono',size:9}},position:'right'}
+      }}
+  });
+
+  // Win/Lose pie
+  const wlCtx=document.getElementById('wlChart').getContext('2d');
+  if(wlChartInst) wlChartInst.destroy();
+  wlChartInst=new Chart(wlCtx,{
+    type:'doughnut',
+    data:{
+      labels:['WIN','LOSE'],
+      datasets:[{data:[wins.length,losses.length],
+        backgroundColor:['rgba(0,229,160,.7)','rgba(255,61,90,.7)'],
+        borderColor:['var(--buy)','var(--sell)'],borderWidth:2}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',
+      plugins:{legend:{labels:{color:'#dde2f2',font:{family:'JetBrains Mono',size:11}}}}}
+  });
+
+  // Trade log
+  const log=document.getElementById('btTradeLog');
+  log.innerHTML=trades.map(t=>`
+    <div class="bt-row ${t.outcome==='WIN'?'win':'lose'}">
+      <span style="color:var(--muted)">${t.n}</span>
+      <span style="color:var(--muted);font-size:10px">${shortDate(t.date)}</span>
+      <span style="font-family:var(--mono)">${t.entry}</span>
+      <span style="font-family:var(--mono)">${t.exit}</span>
+      <span class="${t.outcome==='WIN'?'win-badge':'lose-badge'}">${parseFloat(t.pnl)>=0?'+':''}${t.pnl}</span>
+      <span style="color:var(--gold)">1:${t.rr}</span>
+      <span class="${t.outcome==='WIN'?'win-badge':'lose-badge'}">${t.outcome}</span>
+    </div>`).join('');
+
+  window._btTrades=trades;
+  showToast(`Backtest selesai: ${trades.length} trade, WR ${winrate}%`,'ok');
+}
+
+function calcMaxDrawdown(trades){
+  let peak=0,maxDD=0,equity=0;
+  trades.forEach(t=>{
+    equity+=parseFloat(t.pnl);
+    if(equity>peak) peak=equity;
+    const dd=peak-equity;
+    if(dd>maxDD) maxDD=dd;
+  });
+  return maxDD;
+}
+
+function exportCSV(){
+  if(!window._btTrades||!window._btTrades.length){ showToast('Jalankan backtest dulu','fail'); return; }
+  const rows=[['#','Date','Dir','Entry','Exit','PnL','RR','Result']];
+  window._btTrades.forEach(t=>rows.push([t.n,t.date,t.dir,t.entry,t.exit,t.pnl,t.rr,t.outcome]));
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='xauusd_backtest.csv';a.click();
+  showToast('CSV berhasil diunduh ✓','ok');
+}
+
+// ═══════════════════════════════════════════════
+//  TELEGRAM
+// ═══════════════════════════════════════════════
+function saveTgConfig(){
+  localStorage.setItem('tg_token',document.getElementById('tgToken').value.trim());
+  localStorage.setItem('tg_chatid',document.getElementById('tgChatId').value.trim());
+  localStorage.setItem('tg_interval',document.getElementById('tgInterval').value);
+  setupAutoSend();
+  showToast('Konfigurasi Telegram disimpan ✓','ok');
+}
+
+function loadTgConfig(){
+  const t=localStorage.getItem('tg_token')||'';
+  const c=localStorage.getItem('tg_chatid')||'';
+  const i=localStorage.getItem('tg_interval')||'0';
+  if(t) document.getElementById('tgToken').value=t;
+  if(c) document.getElementById('tgChatId').value=c;
+  document.getElementById('tgInterval').value=i;
+}
+
+async function tgSend(msg){
+  const token=localStorage.getItem('tg_token');
+  const chatId=localStorage.getItem('tg_chatid');
+  if(!token||!chatId) return false;
+  const res=await fetch(`https://api.telegram.org/bot${token}/sendMessage`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({chat_id:chatId,text:msg,parse_mode:'Markdown'})
+  });
+  const d=await res.json();
+  return d.ok;
+}
+
+async function testTg(){
+  saveTgConfig();
+  document.getElementById('tgStatus').textContent='⏳ Mengirim…';
+  const ok=await tgSend('✅ *XAU Analyst* terhubung!\nBot SMC/ICT XAUUSD siap mengirim sinyal.');
+  document.getElementById('tgStatus').style.color=ok?'var(--buy)':'var(--sell)';
+  document.getElementById('tgStatus').textContent=ok?'✓ Berhasil! Cek Telegram Anda.':'✗ Gagal. Cek Token & Chat ID.';
+}
+
+async function sendCurrentSignal(){
+  if(!currentSignal){ showToast('Jalankan analisa dulu','fail'); return; }
+  const s=currentSignal.signal;
+  const ts=new Date().toLocaleString('id-ID');
+  const msg=`📡 *XAU/USD SIGNAL — SMC/ICT*\n🕐 ${ts}\n\n`+
+    `*ARAH:* \`${s.dir}\`\n*BIAS H1:* \`${s.bias}\`\n\n`+
+    `▶ *ENTRY:* \`${s.entry}\`\n🛑 *STOP LOSS:* \`${s.sl}\`\n🎯 *TAKE PROFIT:* \`${s.tp}\`\n📐 *R:R:* \`1:${s.rr}\`\n\n`+
+    `*Konfluensi:* ${s.reasons.map(r=>r.label).join(' · ')}\n\n`+
+    `⚠️ _Bukan financial advice. Selalu kelola risiko Anda._`;
+  const ok=await tgSend(msg);
+  showToast(ok?'✓ Sinyal terkirim ke Telegram!':'✗ Gagal kirim',ok?'ok':'fail');
+}
+
+function setupAutoSend(){
+  if(autoInterval) clearInterval(autoInterval);
+  const mins=parseInt(localStorage.getItem('tg_interval')||'0');
+  if(mins>0){
+    autoInterval=setInterval(async()=>{
+      await startAnalysis();
+      await sendCurrentSignal();
+    }, mins*60*1000);
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════
+function shortDate(t){ return t?t.substring(5,16).replace('T',' ').replace(' ','\n'):''; }
+function shortTime(t){ return t?t.substring(11,16):''; }
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+function showLoading(txt){
+  document.getElementById('loadingText').textContent=txt;
+  document.getElementById('loadingOverlay').classList.add('show');
+}
+function setLoadingText(txt){ document.getElementById('loadingText').textContent=txt; }
+function hideLoading(){ document.getElementById('loadingOverlay').classList.remove('show'); }
+
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show'+(type?' '+type:'');
+  clearTimeout(window._tt);
+  window._tt=setTimeout(()=>t.className='toast',3000);
+}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+loadTgConfig();
+const savedKey=localStorage.getItem('td_apikey');
+if(savedKey) document.getElementById('apiKey').value=savedKey;
+
+// Auto refresh price every 30s
+setInterval(fetchPrice, 30000);
+</script>
 </body>
 </html>
